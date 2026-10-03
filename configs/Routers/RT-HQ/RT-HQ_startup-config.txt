@@ -1,0 +1,173 @@
+!
+version 15.1
+service timestamps log datetime msec
+no service timestamps debug datetime msec
+service password-encryption
+!
+hostname RT-HQ
+!
+!
+!
+enable secret 5 $1$mERr$Pq3/lr0agnISq0fxb9TUZ0
+!
+!
+!
+clock timezone WET 0
+!
+!
+!
+!
+ip cef
+ipv6 unicast-routing
+!
+no ipv6 cef
+!
+!
+!
+username netadmin privilege 15 secret 5 $1$mERr$Pq3/lr0agnISq0fxb9TUZ0
+!
+!
+license udi pid CISCO2911/K9 sn FTX1524Y7QD-
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip ssh version 2
+no ip domain-lookup
+ip domain-name ensa.local
+!
+!
+spanning-tree mode pvst
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0
+ no ip address
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/0.10
+ encapsulation dot1Q 10
+ ip address 10.30.10.1 255.255.255.0
+ ip helper-address 10.30.20.10
+ ip nat inside
+ ip access-group PROTECT-MANAGMENT in
+ ipv6 address 2001:DB8:AAAA:10::1/64
+ ipv6 ospf 10 area 0
+!
+interface GigabitEthernet0/0.20
+ encapsulation dot1Q 20
+ ip address 10.30.20.1 255.255.255.0
+ ip nat inside
+ ipv6 address 2001:DB8:AAAA:20::1/64
+ ipv6 ospf 10 area 0
+!
+interface GigabitEthernet0/0.99
+ encapsulation dot1Q 99
+ ip address 10.30.99.1 255.255.255.0
+ ip nat inside
+ ipv6 address 2001:DB8:AAAA:99::1/64
+ ipv6 ospf 10 area 0
+!
+interface GigabitEthernet0/1
+ ip address 203.0.113.2 255.255.255.252
+ ip nat outside
+ duplex auto
+ speed auto
+ ipv6 address 2001:DB8:BBBB:1::2/64
+!
+interface GigabitEthernet0/2
+ no ip address
+ duplex auto
+ speed auto
+!
+interface Serial0/0/0
+ ip address 10.255.0.1 255.255.255.252
+ ip nat inside
+ ip access-group PROTECT-MANAGMENT in
+ ipv6 address 2001:DB8:AAAA:FF10::1/64
+ ipv6 ospf 10 area 0
+!
+interface Serial0/0/1
+ ip address 10.255.0.5 255.255.255.252
+ ip nat inside
+ ip access-group PROTECT-MANAGMENT in
+ ipv6 address 2001:DB8:AAAA:FF20::1/64
+ ipv6 ospf 10 area 0
+ clock rate 64000
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+router ospf 10
+ router-id 1.1.1.1
+ log-adjacency-changes
+ passive-interface default
+ no passive-interface Serial0/0/0
+ no passive-interface Serial0/0/1
+ network 10.30.10.0 0.0.0.255 area 0
+ network 10.30.20.0 0.0.0.255 area 0
+ network 10.30.99.0 0.0.0.255 area 0
+ network 10.255.0.4 0.0.0.3 area 0
+ network 10.255.0.0 0.0.0.3 area 0
+ default-information originate
+!
+ipv6 router ospf 10
+ router-id 1.1.1.1
+ default-information originate
+ log-adjacency-changes
+ passive-interface default
+ no passive-interface Serial0/0/0
+ no passive-interface Serial0/0/1
+!
+ip nat inside source list 1 interface GigabitEthernet0/1 overload
+ip classless
+ip route 0.0.0.0 0.0.0.0 203.0.113.1 
+!
+ip flow-export version 9
+!
+ipv6 route ::/0 2001:DB8:BBBB:1::1
+!
+ip access-list extended PROTECT-MANAGMENT
+ permit tcp host 10.30.99.10 any eq 22
+ permit tcp host 10.30.99.10 any eq 443
+ permit icmp host 10.30.99.10 any
+ deny ip any 10.30.99.0 0.0.0.255
+ permit ip any any
+access-list 1 permit 10.31.10.0 0.0.0.255
+access-list 1 permit 10.32.10.0 0.0.0.255
+!
+banner motd #ACCESS RESTRICTED - JUST AUTHORIZED PEOPLE!#
+!
+!
+!
+snmp-server community ENSA-RO RO
+!
+logging 10.30.20.10
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+!
+line aux 0
+!
+line vty 0 4
+ exec-timeout 5 0
+ login local
+ transport input ssh
+!
+!
+ntp server 10.30.20.10
+!
+end
+
