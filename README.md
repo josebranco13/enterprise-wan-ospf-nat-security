@@ -59,6 +59,14 @@ The project was created with the following goals:
 
 The topology is divided into four main areas.
 
+<p align="center">
+  <img src="topology/topology.png" alt="Enterprise Network Topology" width="900">
+</p>
+
+<p align="center">
+  <em>Complete enterprise topology implemented in Cisco Packet Tracer.</em>
+</p>
+
 ### Headquarters
 
 The headquarters contains the main routing device, two switches, user devices, internal services, and the network management workstation.
