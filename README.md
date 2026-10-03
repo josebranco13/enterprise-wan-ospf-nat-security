@@ -1,5 +1,19 @@
 # Enterprise WAN, OSPF, NAT and Security — Cisco Packet Tracer
 
+<p align="center">
+  <img src="https://img.shields.io/badge/status-completed-brightgreen" alt="Status Completed">
+  <img src="https://img.shields.io/badge/Cisco-Packet%20Tracer-1BA0D7" alt="Cisco Packet Tracer">
+  <img src="https://img.shields.io/badge/course-CCNA%20ENSA-orange" alt="CCNA ENSA">
+  <img src="https://img.shields.io/badge/IPv4-enabled-blue" alt="IPv4">
+  <img src="https://img.shields.io/badge/IPv6-enabled-blueviolet" alt="IPv6">
+  <img src="https://img.shields.io/badge/routing-OSPFv2%20%7C%20OSPFv3-red" alt="OSPFv2 and OSPFv3">
+  <img src="https://img.shields.io/badge/switching-VLANs%20%7C%20802.1Q-yellow" alt="VLANs and 802.1Q">
+  <img src="https://img.shields.io/badge/NAT-PAT-informational" alt="NAT PAT">
+  <img src="https://img.shields.io/badge/security-ACL%20%7C%20SSH-critical" alt="ACL and SSH">
+  <img src="https://img.shields.io/badge/management-SNMP%20%7C%20Syslog%20%7C%20NTP-lightgrey" alt="SNMP Syslog NTP">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+</p>
+
 ## Overview
 
 This project is a complete Cisco Packet Tracer lab designed to simulate a small enterprise network with a central headquarters, two remote branches, an ISP connection, internal services, management access, and a public-facing network.
