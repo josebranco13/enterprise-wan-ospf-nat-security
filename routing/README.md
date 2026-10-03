@@ -2,41 +2,25 @@
 
 ## Purpose
 
-This folder documents the IPv4 routing design used to connect the headquarters, Branch 1, and Branch 2.
+This folder documents the dynamic IPv4 routing used to connect headquarters, Branch 1, and Branch 2.
 
-The project uses OSPF as the internal dynamic routing protocol and a static default route at the headquarters for traffic toward the simulated ISP.
-
----
-
-## Why Routing Is Required
-
-Each site uses different IP networks.
-
-A device in Branch 1 does not automatically know how to reach:
-
-```text
-10.30.10.0/24
-10.30.20.0/24
-10.30.99.0/24
-10.32.10.0/24
-```
-
-Routers need routing information that tells them which next hop or outgoing interface should be used for remote networks.
-
-Rather than manually creating a static route for every internal destination on every router, the project uses OSPF.
+The internal enterprise routers use OSPFv2 so that remote networks can be learned dynamically rather than requiring a separate static route for every destination.
 
 ---
 
-## OSPF Design
+## OSPF Neighbors on RT-HQ
 
-The OSPF configuration uses:
+<p align="center">
+  <img src="ospfv2-neighbors-rt-hq.png" alt="OSPFv2 neighbors on RT-HQ" width="850">
+</p>
 
-```text
-OSPF process: 10
-Area: 0
-```
+<p align="center">
+  <em>OSPF adjacency between the headquarters router and both branch routers.</em>
+</p>
 
-Router IDs:
+A `FULL` neighbor state confirms that the routers have successfully formed an OSPF adjacency.
+
+Router IDs used in the project:
 
 ```text
 RT-HQ  → 1.1.1.1
@@ -44,164 +28,120 @@ RT-BR1 → 2.2.2.2
 RT-BR2 → 3.3.3.3
 ```
 
-The serial WAN links between headquarters and the branches establish OSPF neighbor relationships.
+---
+
+## Routes on RT-HQ
+
+<p align="center">
+  <img src="ospfv2-routes-rt-hq.png" alt="OSPFv2 routes on RT-HQ" width="850">
+</p>
+
+<p align="center">
+  <em>Routes available on the headquarters router.</em>
+</p>
+
+The headquarters learns the branch LANs through OSPF while also maintaining its directly connected internal networks and the route toward the ISP.
 
 ---
 
-## Passive Interfaces
+## Routes on RT-BR1
 
-The configuration uses:
+<p align="center">
+  <img src="ospfv2-routes-rt-br1.png" alt="OSPFv2 routes on RT-BR1" width="850">
+</p>
+
+<p align="center">
+  <em>Remote enterprise routes learned by Branch 1.</em>
+</p>
+
+Branch 1 learns how to reach headquarters and Branch 2 through OSPF.
+
+---
+
+## Routes on RT-BR2
+
+<p align="center">
+  <img src="ospfv2-routes-rt-br2.png" alt="OSPFv2 routes on RT-BR2" width="850">
+</p>
+
+<p align="center">
+  <em>Remote enterprise routes learned by Branch 2.</em>
+</p>
+
+Branch 2 similarly learns remote networks dynamically through the headquarters.
+
+---
+
+## OSPF Design
+
+The project uses:
 
 ```text
-passive-interface default
+OSPF process 10
+Area 0
 ```
 
-and then explicitly enables OSPF neighbor formation on the required WAN interfaces.
+LAN-facing interfaces are advertised but do not need to form OSPF relationships with end devices.
 
-This is useful because LAN interfaces still advertise their networks into OSPF without sending OSPF Hello packets toward ordinary end devices.
-
-Conceptually:
-
-```text
-LAN interface
-Advertise network ✅
-Form OSPF neighbors with PCs ❌
-
-WAN interface
-Advertise network ✅
-Form OSPF router adjacency ✅
-```
-
----
-
-## Headquarters Networks
-
-`RT-HQ` advertises the headquarters networks into OSPF.
-
-These include the user, server, and management networks.
-
-The branch routers therefore learn how to reach headquarters dynamically.
-
----
-
-## Branch Networks
-
-Each branch advertises its local LAN.
-
-This allows:
-
-- HQ to reach both branches;
-- Branch 1 to reach Branch 2;
-- Branch 2 to reach Branch 1.
-
-The headquarters becomes the central routing point between the remote sites.
+The WAN serial links are the interfaces responsible for establishing router-to-router OSPF adjacencies.
 
 ---
 
 ## Default Route
 
-`RT-HQ` has a static default route toward the ISP:
+`RT-HQ` uses a static default route toward the simulated ISP:
 
 ```text
 ip route 0.0.0.0 0.0.0.0 203.0.113.1
 ```
 
-Instead of configuring a separate default route manually on each branch, HQ can advertise the default route into OSPF.
+This route can be advertised to the branches through OSPF.
 
-The branch routers should then learn an OSPF external default route, typically displayed as:
+On the branch routers, the learned default route may appear as:
 
 ```text
 O*E2 0.0.0.0/0
 ```
 
-This tells the branches:
-
-> If no more specific route exists, send the traffic toward headquarters.
-
 ---
 
-## OSPF Verification
+## Verification Commands
 
-The most important command is:
+Useful commands include:
 
 ```text
 show ip ospf neighbor
-```
-
-On `RT-HQ`, both branch routers should appear as OSPF neighbors in the `FULL` state.
-
-This demonstrates that the OSPF adjacency has been successfully established.
-
----
-
-## Routing Table Verification
-
-Use:
-
-```text
 show ip route
 show ip route ospf
-```
-
-Expected route types can include:
-
-```text
-C   Connected
-L   Local
-O   OSPF
-O*E2 OSPF external default route
-S*  Static default route
-```
-
-The exact output depends on the device being inspected.
-
----
-
-## Recommended Evidence
-
-```text
-ospfv2-neighbors-rt-hq.png
-ospfv2-routes-rt-hq.png
-ospfv2-routes-rt-br1.png
-ospfv2-routes-rt-br2.png
-default-route-br1.png
+show ip protocols
 ```
 
 ---
 
 ## Relationship with Troubleshooting
 
-Routing is also used in several deliberate troubleshooting scenarios.
+OSPF is also used in deliberate failure scenarios involving:
 
-Examples include:
+- an OSPF area mismatch;
+- an incorrect passive interface.
 
-- OSPF area mismatch;
-- incorrect passive-interface configuration;
-- missing default route.
-
-These incidents demonstrate how a routing problem can be identified from neighbor tables, routing tables, protocol configuration, and connectivity symptoms.
-
-See:
+These scenarios are documented in:
 
 ```text
 ../troubleshooting/
 ```
 
-for the full troubleshooting evidence.
-
 ---
 
-## Skills Demonstrated
+## What This Demonstrates
 
-This part of the project demonstrates:
+This section demonstrates:
 
-- dynamic routing with OSPFv2;
+- OSPFv2;
 - router IDs;
-- OSPF Area 0;
-- adjacency formation;
+- Area 0;
+- neighbor formation;
+- dynamic route learning;
 - passive interfaces;
-- route advertisement;
-- route-table analysis;
-- static default routing;
 - default-route propagation;
-- routing troubleshooting.
+- routing-table analysis.

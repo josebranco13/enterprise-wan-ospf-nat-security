@@ -1,355 +1,255 @@
-# Troubleshooting Scenarios
+# Troubleshooting
 
 ## Purpose
 
-This folder documents deliberate failures introduced into an otherwise functional network.
+This folder documents deliberate faults introduced into an otherwise functional network.
 
-The objective is to demonstrate a structured troubleshooting methodology rather than only the ability to configure a working topology.
-
-Each scenario follows the same process:
+The goal is to demonstrate a structured troubleshooting process:
 
 ```text
-1. Confirm the network is working
-2. Introduce one controlled fault
-3. Observe the symptoms
-4. Collect diagnostic evidence
-5. Identify the root cause
-6. Correct the configuration
-7. Verify that normal operation has returned
+Working network
+      ↓
+Controlled fault
+      ↓
+Observed symptom
+      ↓
+Diagnosis
+      ↓
+Correction
+      ↓
+Verification
 ```
 
-Only one fault should be introduced at a time.
+Each incident is stored in its own subfolder.
 
 ---
 
-# Incident 1 — OSPF Area Mismatch
+# 1. OSPF Area Mismatch
 
-## Normal State
-
-`RT-HQ` should have full OSPF adjacency with both branch routers.
-
-Verification:
-
-```text
-show ip ospf neighbor
-```
-
-Expected neighbors include router IDs:
-
-```text
-2.2.2.2
-3.3.3.3
-```
-
-with the adjacency in the `FULL` state.
-
-## Fault Introduced
-
-On `RT-BR1`, the HQ-BR1 WAN network is temporarily moved from OSPF Area 0 to Area 1.
-
-Conceptually:
-
-```text
-RT-HQ                 RT-BR1
-Area 0                Area 1
-  |                      |
-  +------ WAN link ------+
-          mismatch
-```
-
-OSPF neighbors on the same link must agree on the area.
-
-## Symptoms
-
-The Branch 1 OSPF neighbor relationship disappears.
-
-Branch 2 should remain unaffected.
-
-## Diagnosis
-
-Useful commands:
-
-```text
-show ip ospf neighbor
-show ip protocols
-show ip route ospf
-```
-
-The results help isolate the problem to the OSPF configuration of the HQ-BR1 link.
-
-## Resolution
-
-Return the WAN network on `RT-BR1` to Area 0.
-
-Verify that the neighbor relationship returns to `FULL`.
-
-## Evidence
+Folder:
 
 ```text
 01-ospf-area-mismatch/
-├── before.png
-├── failure.png
-├── diagnosis.png
-└── fixed.png
 ```
 
----
+## Before
 
-# Incident 2 — Incorrect Passive Interface
+<p align="center">
+  <img src="01-ospf-area-mismatch/before.png" alt="OSPF area mismatch before" width="850">
+</p>
 
-## Normal State
+<p align="center">
+  <em>Normal OSPF state before introducing the area mismatch.</em>
+</p>
 
-Both branch routers should appear as full OSPF neighbors on `RT-HQ`.
+## Failure
 
-## Fault Introduced
+<p align="center">
+  <img src="01-ospf-area-mismatch/failure.png" alt="OSPF area mismatch failure" width="850">
+</p>
 
-The HQ interface toward Branch 1 is temporarily configured as passive.
-
-A passive OSPF interface does not send Hello packets.
-
-## Symptoms
-
-The OSPF adjacency with Branch 1 is lost.
-
-The adjacency with Branch 2 should remain operational.
+<p align="center">
+  <em>OSPF adjacency failure after configuring incompatible OSPF areas on the same WAN link.</em>
+</p>
 
 ## Diagnosis
 
-Useful commands:
+<p align="center">
+  <img src="01-ospf-area-mismatch/diagnosis.png" alt="OSPF area mismatch diagnosis" width="850">
+</p>
 
-```text
-show ip ospf neighbor
-show ip protocols
-```
+<p align="center">
+  <em>Diagnostic output used to identify the incorrect OSPF area.</em>
+</p>
 
-`show ip protocols` can reveal that the WAN interface was incorrectly placed in the passive-interface list.
+## Fixed
 
-## Resolution
+<p align="center">
+  <img src="01-ospf-area-mismatch/fixed.png" alt="OSPF area mismatch fixed" width="850">
+</p>
 
-Remove the passive setting from the Branch 1 WAN interface.
+<p align="center">
+  <em>OSPF adjacency restored after returning the link to the correct area.</em>
+</p>
 
-Verify that the adjacency returns to `FULL`.
+### Root Cause
 
-## Evidence
+OSPF routers connected to the same link must agree on the OSPF area. A mismatch prevents the neighbor relationship from reaching the normal `FULL` state.
+
+---
+
+# 2. Incorrect Passive Interface
+
+Folder:
 
 ```text
 02-passive-interface/
-├── before.png
-├── failure.png
-└── fixed.png
 ```
+
+## Before
+
+<p align="center">
+  <img src="02-passive-interface/before.png" alt="Passive interface before" width="850">
+</p>
+
+<p align="center">
+  <em>Normal OSPF adjacency before introducing the fault.</em>
+</p>
+
+## Failure
+
+<p align="center">
+  <img src="02-passive-interface/failure.png" alt="Passive interface failure" width="850">
+</p>
+
+<p align="center">
+  <em>OSPF adjacency lost after the WAN interface was incorrectly made passive.</em>
+</p>
+
+## Fixed
+
+<p align="center">
+  <img src="02-passive-interface/fixed.png" alt="Passive interface fixed" width="850">
+</p>
+
+<p align="center">
+  <em>Neighbor relationship restored after correcting the passive-interface configuration.</em>
+</p>
+
+### Root Cause
+
+An OSPF passive interface does not send Hello packets. This is appropriate for LAN interfaces with end devices, but not for a WAN interface that must establish an OSPF adjacency with another router.
 
 ---
 
-# Incident 3 — Missing Default Route
+# 3. NAT Inside / Outside Fault
 
-## Normal State
-
-`RT-HQ` has a static default route toward the ISP:
+Folder:
 
 ```text
-0.0.0.0/0 → 203.0.113.1
+03-nat-inside-outside/
 ```
 
-The branch routers receive a default route through OSPF.
+## Before
 
-On a branch router, this may appear as:
+<p align="center">
+  <img src="03-nat-inside-outside/before.png" alt="NAT configuration before fault" width="850">
+</p>
+
+<p align="center">
+  <em>NAT state before the deliberate configuration change.</em>
+</p>
+
+## Failure
+
+<p align="center">
+  <img src="03-nat-inside-outside/failure.png" alt="NAT inside outside failure" width="850">
+</p>
+
+<p align="center">
+  <em>Evidence captured after introducing the NAT inside/outside fault.</em>
+</p>
+
+### Troubleshooting Focus
+
+NAT depends on the router correctly identifying the internal and external sides of the network.
+
+Useful verification commands include:
 
 ```text
-O*E2 0.0.0.0/0
+show ip nat statistics
+show ip nat translations
 ```
 
-## Fault Introduced
+The NAT statistics output is particularly useful because it identifies which interfaces the router currently considers `inside` and `outside`.
 
-The static default route is temporarily removed from `RT-HQ`.
+### Packet Tracer Note
 
-## Symptoms
+Because this project uses a fully simulated public network inside Packet Tracer, connectivity behavior may not always reproduce a real Internet edge failure exactly.
 
-The HQ router no longer has its ISP default route.
-
-Because OSPF is configured to originate the default route based on the presence of that route, the branches also lose their OSPF-learned default route.
-
-Internal OSPF routes may continue to work.
-
-## Diagnosis
-
-Useful commands:
-
-```text
-show ip route
-show ip route ospf
-show running-config | include ip route
-```
-
-The key observation is the absence of:
-
-```text
-S* 0.0.0.0/0
-```
-
-on the headquarters and the absence of:
-
-```text
-O*E2 0.0.0.0/0
-```
-
-on the branches.
-
-## Resolution
-
-Restore:
-
-```text
-ip route 0.0.0.0 0.0.0.0 203.0.113.1
-```
-
-Wait for OSPF to propagate the change and verify that the branch default route returns.
-
-## Evidence
-
-```text
-03-missing-default-route/
-├── before.png
-└── failure.png
-```
+For that reason, NAT troubleshooting should consider translation tables and NAT statistics in addition to ping results.
 
 ---
 
-# Incident 4 — ACL Implicit Deny
+# 4. ACL Implicit Deny
 
-## Normal State
-
-The management ACL ends with:
+Folder:
 
 ```text
-permit ip any any
+04-acl-implicit-deny/
 ```
 
-This explicitly allows traffic that was not meant to be blocked by the earlier management-security rules.
+## Failure
 
-## Fault Introduced
+<p align="center">
+  <img src="04-acl-implicit-deny/failure.png" alt="ACL implicit deny failure" width="850">
+</p>
 
-The final permit statement is temporarily removed.
+<p align="center">
+  <em>Traffic failure caused by reaching the ACL's implicit deny.</em>
+</p>
 
-Every Cisco ACL has an implicit:
+## Fixed
+
+<p align="center">
+  <img src="04-acl-implicit-deny/fixed.png" alt="ACL implicit deny fixed" width="850">
+</p>
+
+<p align="center">
+  <em>Connectivity restored after correcting the ACL.</em>
+</p>
+
+### Root Cause
+
+Every Cisco ACL contains an implicit deny at the end:
 
 ```text
 deny ip any any
 ```
 
-at the end, even though it is not normally displayed as a configured line.
+This statement is not normally shown as a manually configured rule.
 
-## Symptoms
-
-Traffic entering an interface where the ACL is applied may begin to fail if it does not match one of the earlier permit statements.
-
-## Diagnosis
-
-Useful command:
-
-```text
-show access-lists
-```
-
-The output shows that the explicit final permit has disappeared.
-
-The missing permit explains why otherwise legitimate traffic is now reaching the ACL's implicit deny.
-
-## Resolution
-
-Restore:
+If the intended final rule:
 
 ```text
 permit ip any any
 ```
 
-and repeat the connectivity test.
-
-## Evidence
-
-```text
-04-acl-implicit-deny/
-├── before.png
-├── failure.png
-├── diagnosis.png
-└── fixed.png
-```
-
----
-
-## Screenshot Strategy
-
-For each incident:
-
-### `before.png`
-
-Proves that the relevant feature was working before the fault.
-
-### `failure.png`
-
-Shows the observable symptom.
-
-### `diagnosis.png`
-
-Shows the command output that reveals the root cause.
-
-### `fixed.png`
-
-Proves that normal operation was restored.
-
-This structure makes each scenario understandable even to someone who does not have access to the Packet Tracer file.
+is removed, traffic that does not match an earlier permit statement is dropped.
 
 ---
 
 ## Troubleshooting Methodology
 
-A useful general approach followed in this project is:
+The scenarios in this folder follow a simple rule:
+
+**change only one thing at a time.**
+
+This makes it possible to associate the observed symptom with a specific configuration error.
+
+Useful troubleshooting tools used throughout the project include:
 
 ```text
-Physical / Interface State
-        ↓
-Addressing
-        ↓
-Local Connectivity
-        ↓
-Routing / Neighbor State
-        ↓
-Routing Table
-        ↓
-Policies such as ACL / NAT
-        ↓
-End-to-End Test
+show ip interface brief
+show ip ospf neighbor
+show ip route
+show ip protocols
+show access-lists
+show ip nat translations
+show ip nat statistics
+ping
 ```
 
-The exact order can change depending on the symptoms, but the goal is always to narrow down the failure systematically instead of changing several configurations at once.
-
 ---
 
-## Important Rule
+## Final State
 
-Do not save the deliberately broken state as the final `project.pkt`.
+The deliberately broken configurations are only temporary.
 
-After every incident:
+After each scenario:
 
-1. restore the correct configuration;
-2. verify the feature again;
-3. save only the working topology.
+1. the fault is corrected;
+2. normal operation is verified;
+3. the final `project.pkt` is kept in a working state.
 
-The troubleshooting screenshots preserve the fault for documentation without leaving the main project in a broken state.
-
----
-
-## Skills Demonstrated
-
-The troubleshooting section demonstrates:
-
-- baseline verification;
-- controlled fault injection;
-- symptom analysis;
-- OSPF troubleshooting;
-- route-table analysis;
-- passive-interface troubleshooting;
-- default-route troubleshooting;
-- ACL troubleshooting;
-- root-cause identification;
-- post-fix validation.
+The screenshots preserve the troubleshooting process without leaving the main topology intentionally broken.

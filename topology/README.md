@@ -4,159 +4,103 @@
 
 This folder provides the visual overview of the complete enterprise network.
 
-It is the best starting point for anyone reviewing the repository for the first time.
-
-The topology was designed to represent a small company with a central headquarters, two remote branch offices, internal services, a dedicated management segment, and a simulated ISP/public network.
+The topology was designed to simulate a small company with a central headquarters, two remote branch offices, internal services, network management, and a simulated ISP/public network.
 
 ---
 
-## High-Level Design
+## Complete Topology
+
+<p align="center">
+  <img src="topology.png" alt="Complete Cisco Packet Tracer enterprise topology" width="1000">
+</p>
+
+<p align="center">
+  <em>Complete enterprise topology implemented in Cisco Packet Tracer.</em>
+</p>
+
+---
+
+## Main Areas
+
+The topology is divided into four logical areas:
+
+### Headquarters
+
+The headquarters contains the central enterprise router, two switches, user devices, internal services, and the network-administration workstation.
+
+It is also the central point connecting the branch offices and the simulated ISP.
+
+### Branch 1
+
+Branch 1 represents a remote company site connected to headquarters through a WAN link.
+
+It has its own router, switch, client network, and addressing range.
+
+### Branch 2
+
+Branch 2 represents a second remote company site and follows the same general design as Branch 1.
+
+### ISP / Public Network
+
+The ISP router represents the external side of the topology.
+
+A simulated public server allows the project to validate edge routing and NAT behavior without requiring real Internet access.
+
+---
+
+## Logical View
 
 ```text
-                         Simulated Public Network
-                                  |
-                              [RT-ISP]
-                                  |
-                              [RT-HQ]
-                             /       \
-                            /         \
-                       [RT-BR1]     [RT-BR2]
-                          |             |
-                     Branch 1       Branch 2
+                     Simulated Public Network
+                              |
+                           RT-ISP
+                              |
+                           RT-HQ
+                          /     \
+                         /       \
+                    RT-BR1     RT-BR2
+                      |           |
+                   Branch 1    Branch 2
 
-                         |
-                    Headquarters LAN
-                Users / Servers / Management
-```
-
-The real Packet Tracer topology contains the switches, servers, client devices, and individual WAN connections used to implement this logical design.
-
----
-
-## Headquarters
-
-The headquarters is the central site.
-
-It contains:
-
-- `RT-HQ`;
-- `SW1-HQ`;
-- `SW2-HQ`;
-- HQ user devices;
-- `SRV-INTERNAL`;
-- `PC-NETADMIN`.
-
-The HQ network is logically separated into user, server, and management segments.
-
-It also contains the connection toward the simulated ISP.
-
----
-
-## Branch 1
-
-Branch 1 contains:
-
-- `RT-BR1`;
-- `SW-BR1`;
-- branch client devices.
-
-Its local network is:
-
-```text
-10.31.10.0/24
-```
-
-Branch 1 connects to the headquarters through a dedicated WAN link.
-
----
-
-## Branch 2
-
-Branch 2 contains:
-
-- `RT-BR2`;
-- `SW-BR2`;
-- branch client devices.
-
-Its local network is:
-
-```text
-10.32.10.0/24
-```
-
-Like Branch 1, it reaches enterprise resources through the headquarters.
-
----
-
-## ISP and Public Segment
-
-`RT-ISP` simulates an upstream provider.
-
-The ISP side allows the project to test:
-
-- default routing;
-- edge connectivity;
-- NAT/PAT;
-- communication with a simulated public server.
-
-The public server uses:
-
-```text
-198.51.100.10
+                   Headquarters LAN
+            Users / Servers / Management
 ```
 
 ---
 
 ## Why This Topology Was Chosen
 
-The topology is intentionally larger than a basic single-router lab.
+The design allows several networking topics to be combined in one environment:
 
-It requires several networking functions to work together:
-
-- LAN segmentation at headquarters;
+- VLAN segmentation;
 - inter-VLAN routing;
-- multi-site WAN routing;
-- centralized services;
-- branch-to-HQ communication;
-- branch-to-branch communication;
-- edge routing;
-- traffic-control policies;
-- management services;
-- IPv6 routing.
+- WAN links;
+- dynamic routing;
+- centralized DHCP;
+- NAT/PAT;
+- ACL security;
+- SSH administration;
+- network monitoring;
+- IPv6;
+- troubleshooting.
 
-This makes the project useful as a portfolio piece because it demonstrates integration rather than isolated commands.
-
----
-
-## Recommended Evidence
-
-The most important image in this folder is:
-
-```text
-full-topology.png
-```
-
-It should show the complete Packet Tracer workspace with device names and links visible.
-
-An optional additional image is:
-
-```text
-physical-connections.png
-```
-
-This can provide a closer view of the interface-level cabling if the full topology image is too dense.
+Instead of demonstrating these concepts as isolated exercises, the topology requires them to work together as one enterprise network.
 
 ---
 
-## How to Read the Topology
+## Where to Continue
 
-For a non-networking reviewer:
+After reviewing the topology, the following folders provide the implementation details:
 
-- routers connect different networks and sites;
-- switches connect devices inside a local site;
-- servers provide centralized services;
-- client PCs represent users;
-- WAN links connect the branches to headquarters;
-- the ISP router represents the external network.
-
-For a networking reviewer, the other folders provide the detailed implementation behind this diagram.
+```text
+addressing/      → IPv4 and IPv6 addressing
+vlan-trunks/     → VLAN segmentation and trunks
+routing/         → OSPF and routing tables
+dhcp/            → centralized DHCP
+nat/             → NAT/PAT
+security/        → ACLs and SSH
+management/      → NTP, Syslog and SNMP
+ipv6/            → IPv6 and OSPFv3
+connectivity/    → end-to-end validation
+troubleshooting/ → deliberate faults and diagnosis
+```

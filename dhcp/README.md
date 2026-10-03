@@ -1,169 +1,86 @@
-# DHCP and Centralized Address Assignment
+# DHCP
 
 ## Purpose
 
-This folder documents the use of DHCP to provide automatic IPv4 configuration to client devices.
+This folder documents the centralized DHCP service used to automatically configure client devices.
 
-Instead of manually assigning an IP address, subnet mask, default gateway, and DNS server to every workstation, DHCP allows these values to be delivered automatically.
+Instead of manually assigning an IPv4 address, subnet mask, default gateway, and DNS information to every workstation, the project uses DHCP to provide these settings automatically.
 
-In this project, the internal server at headquarters acts as the centralized DHCP service for multiple enterprise networks.
+The internal server at headquarters provides DHCP service for multiple enterprise networks.
 
 ---
 
-## Central DHCP Server
+## DHCP Server Configuration
 
-The internal server uses:
+<p align="center">
+  <img src="srv-internal-dhcp-pools.png" alt="Internal server DHCP pools" width="850">
+</p>
 
-```text
-IPv4 address: 10.30.20.10
-Default gateway: 10.30.20.1
-```
+<p align="center">
+  <em>DHCP pools configured on the internal headquarters server.</em>
+</p>
 
-The server provides addressing information to clients in:
+The centralized server provides address information for:
 
-```text
-HQ Users   → 10.30.10.0/24
-Branch 1   → 10.31.10.0/24
-Branch 2   → 10.32.10.0/24
-```
+- HQ users;
+- Branch 1 users;
+- Branch 2 users.
 
 The management network uses static addressing.
 
 ---
 
-## DHCP Pools
+## Address Pools
 
-The project uses client ranges based on the following plan:
+The client ranges follow the project addressing plan:
 
-```text
-HQ Users:
-10.30.10.100 - 10.30.10.199
+| Network | Client Range |
+|---|---|
+| HQ Users | `10.30.10.100 - 10.30.10.199` |
+| Branch 1 | `10.31.10.100 - 10.31.10.199` |
+| Branch 2 | `10.32.10.100 - 10.32.10.199` |
 
-Branch 1:
-10.31.10.100 - 10.31.10.199
-
-Branch 2:
-10.32.10.100 - 10.32.10.199
-```
-
-Each pool provides the appropriate default gateway for its network.
-
-The internal DNS server address used by the clients is:
-
-```text
-10.30.20.10
-```
+The internal server also provides the correct default gateway and DNS information for each pool.
 
 ---
 
-## Why DHCP Relay Is Required
+## DHCP Relay
 
-DHCP begins with broadcast traffic.
+Because the DHCP server is located at headquarters, clients on remote routed networks cannot reach it using a normal Layer 2 broadcast.
 
-Routers do not normally forward Layer 2 broadcasts between networks. Because the DHCP server is located at headquarters while clients also exist in other IP networks, the branch and headquarters router interfaces must relay the requests to the central server.
-
-This is implemented with:
+The routers therefore relay DHCP requests toward the server using:
 
 ```text
 ip helper-address 10.30.20.10
 ```
 
-The relay agent receives the local DHCP broadcast and forwards it as routable traffic to the DHCP server.
-
----
-
-## Example
-
-Without DHCP relay:
+Conceptually:
 
 ```text
-Branch PC
-   |
-DHCP Discover
-   |
-RT-BR1  X  broadcast is not routed
-```
-
-With DHCP relay:
-
-```text
-Branch PC
-   |
-DHCP Discover
-   |
-RT-BR1
-   |
-ip helper-address
-   |
-WAN / routed network
-   |
+Branch Client
+     |
+DHCP Broadcast
+     |
+Branch Router
+     |
+DHCP Relay
+     |
+Routed Enterprise Network
+     |
 SRV-INTERNAL
 ```
 
-This allows a single centralized server to support several remote networks.
+This makes it possible to use one centralized DHCP server for several different IP networks.
 
 ---
 
-## Verification
+## What This Demonstrates
 
-On client devices:
+This section of the project demonstrates:
 
-```text
-ipconfig
-```
-
-A correct result should show an address that belongs to the correct DHCP pool.
-
-For example, an HQ client may receive:
-
-```text
-IP Address:      10.30.10.x
-Subnet Mask:     255.255.255.0
-Default Gateway: 10.30.10.1
-DNS Server:      10.30.20.10
-```
-
-A Branch 1 client should receive a `10.31.10.x` address, while a Branch 2 client should receive a `10.32.10.x` address.
-
----
-
-## Recommended Evidence
-
-```text
-srv-internal-dhcp-pools.png
-hq-user-dhcp.png
-br1-user-dhcp.png
-br2-user-dhcp.png
-```
-
-The screenshots should show both the configured pools and examples of clients receiving valid addresses.
-
----
-
-## Common DHCP Problems
-
-Typical issues include:
-
-- wrong DHCP pool network;
-- incorrect default gateway in the pool;
-- DHCP service disabled;
-- missing `ip helper-address`;
-- incorrect helper address;
-- routing failure between relay and server;
-- address conflict;
-- client configured statically instead of DHCP.
-
-When troubleshooting, first confirm that the client belongs to the expected network and that the router interface acting as gateway can reach the DHCP server.
-
----
-
-## Skills Demonstrated
-
-This part of the project demonstrates:
-
-- centralized IPv4 address management;
+- centralized client addressing;
 - DHCP pool design;
-- default gateway distribution;
-- DNS option distribution;
-- DHCP relay;
-- troubleshooting across routed networks.
+- gateway distribution;
+- DNS distribution;
+- DHCP relay across routed networks;
+- integration between branch networks and headquarters services.

@@ -4,13 +4,61 @@
 
 This folder documents the Network Address Translation configuration used at the headquarters edge.
 
-The enterprise uses private IPv4 address ranges internally. NAT/PAT provides a mechanism for internal hosts to communicate with the simulated external network through the address assigned to the ISP-facing interface of `RT-HQ`.
+The enterprise network uses private IPv4 ranges internally. NAT/PAT allows internal devices to communicate through the ISP-facing side of the headquarters router using translated addressing.
 
 ---
 
-## Internal Networks
+## NAT Statistics
 
-The NAT policy includes the enterprise IPv4 networks:
+<p align="center">
+  <img src="nat-statistics.png" alt="NAT statistics on RT-HQ" width="850">
+</p>
+
+<p align="center">
+  <em>NAT statistics showing the configured inside and outside interfaces.</em>
+</p>
+
+This output is useful for confirming that the router understands which side of the topology is considered internal and which side faces the simulated external network.
+
+---
+
+## NAT Translation Table
+
+<p align="center">
+  <img src="nat-translations.png" alt="NAT translation table" width="850">
+</p>
+
+<p align="center">
+  <em>Active address translations created by RT-HQ.</em>
+</p>
+
+The translation table provides direct evidence that internal traffic is being processed by NAT/PAT.
+
+This is more reliable than using connectivity alone as proof of translation.
+
+---
+
+## Connectivity to the Simulated Public Server
+
+<p align="center">
+  <img src="nat-public-server-ping.png" alt="Ping to simulated public server" width="850">
+</p>
+
+<p align="center">
+  <em>Connectivity test toward the simulated public server.</em>
+</p>
+
+The public server used in the lab is:
+
+```text
+198.51.100.10
+```
+
+---
+
+## Internal Networks Included in NAT
+
+The project includes the enterprise networks:
 
 ```text
 10.30.0.0/16
@@ -18,71 +66,25 @@ The NAT policy includes the enterprise IPv4 networks:
 10.32.10.0/24
 ```
 
-These networks represent headquarters and the two branches.
-
----
-
-## Inside and Outside Interfaces
-
-NAT distinguishes between two logical sides.
-
-### Inside
-
-Interfaces connected toward the enterprise network are considered NAT inside interfaces.
-
-This includes the headquarters internal VLAN subinterfaces and the WAN links toward the branches where applicable to the configured design.
-
-### Outside
-
-The interface facing the ISP is the NAT outside interface.
-
-For `RT-HQ`:
-
-```text
-GigabitEthernet0/1
-```
-
-connects toward the simulated ISP.
-
----
-
-## PAT
-
-The project uses Port Address Translation, also known as NAT overload.
-
-Instead of assigning a different public IPv4 address to every internal device, multiple internal connections can share the ISP-facing address of `RT-HQ`.
+PAT allows multiple internal devices to share the ISP-facing address of the headquarters router.
 
 Conceptually:
 
 ```text
-10.30.10.x \
-10.31.10.x  > → RT-HQ → 203.0.113.2 → external network
-10.32.10.x /
+HQ / BR1 / BR2 private addresses
+              |
+              v
+           RT-HQ
+              |
+        NAT / PAT
+              |
+              v
+     Simulated ISP network
 ```
-
-The router distinguishes flows using transport-layer information.
 
 ---
 
-## NAT ACL
-
-A standard ACL identifies which source networks are eligible for translation.
-
-The intended networks are:
-
-```text
-10.30.0.0/16
-10.31.10.0/24
-10.32.10.0/24
-```
-
-The ACL is not being used here as a security filter. Its role is to select traffic for NAT.
-
-This distinction is important: ACLs can be used for different purposes depending on where and how they are referenced.
-
----
-
-## Verification
+## Verification Commands
 
 Useful commands include:
 
@@ -91,71 +93,28 @@ show ip nat translations
 show ip nat statistics
 ```
 
-`show ip nat translations` displays active translation entries.
-
-`show ip nat statistics` provides information about the NAT configuration and the interfaces identified as inside and outside.
-
-A connectivity test toward the simulated public server can be used together with these commands.
-
----
-
-## Recommended Evidence
-
-```text
-nat-statistics.png
-nat-translations.png
-nat-public-server-ping.png
-```
-
-A strong evidence sequence is:
-
-1. initiate traffic from an internal host;
-2. verify that the destination is reachable;
-3. immediately inspect the NAT translation table.
-
----
-
-## Important Lab Observation
-
-The simulated public server exists inside the Packet Tracer topology rather than on the real Internet.
-
-Because of this, routing behavior in a simulation can sometimes allow a destination to remain reachable even when a NAT fault has been deliberately introduced.
-
-For that reason, NAT verification should not rely only on `ping`.
-
-The NAT table and NAT statistics provide more direct evidence that translation is occurring.
-
----
-
-## Common NAT Problems
-
-Typical issues include:
-
-- incorrect NAT ACL;
-- missing internal network from the NAT ACL;
-- incorrect inside/outside assignment;
-- missing overload configuration;
-- wrong external interface;
-- missing route toward the ISP;
-- stale translations during troubleshooting.
-
-Useful troubleshooting command:
+During troubleshooting, translations can also be cleared in the lab with:
 
 ```text
 clear ip nat translation *
 ```
 
-This should be used carefully and only in a lab or controlled environment.
+---
+
+## Important Simulation Note
+
+Because the public server exists inside the Packet Tracer topology rather than on the real Internet, a ping alone should not be treated as the only evidence that NAT is functioning.
+
+The translation table and NAT statistics shown above provide stronger evidence that translation is actually occurring.
 
 ---
 
-## Skills Demonstrated
+## What This Demonstrates
 
 This section demonstrates:
 
-- private IPv4 addressing;
 - NAT inside/outside concepts;
-- PAT / overload;
-- traffic selection with an ACL;
-- translation-table verification;
-- edge-network troubleshooting.
+- PAT / NAT overload;
+- private-to-external address translation;
+- NAT verification;
+- edge-connectivity testing.
